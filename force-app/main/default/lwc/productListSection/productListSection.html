@@ -1,0 +1,227 @@
+<template>
+    <style>
+        /*.redColor {
+            background-color: red!important;
+        }
+
+        .test {
+            width: 2rem;
+            height: 2rem;
+            position: relative;
+            display: inline-block;
+            border: 1px solid rgb(217, 219, 221);
+            border-radius: .25rem;
+            background-color: red !important;
+            cursor: pointer;
+        }*/
+    </style>
+
+    <lightning-card title="All Products" icon-name="utility:opened_folder">
+        <div slot="actions">
+            <lightning-button  slot="actions"  label="New Product"></lightning-button>
+            <template if:false={showFiltersMode}>
+                <lightning-button name="1" slot="actions" icon-name="utility:down" onclick={filtersMode} label="Show Filters"></lightning-button>
+            </template>
+            <templaete if:true={showFiltersMode}>
+                <lightning-button  slot="actions" icon-name="utility:up" onclick={filtersMode} label="Hide Filters"></lightning-button>
+            </templaete>
+        </div>
+
+        <lightning-layout multiple-rows="true" horizontal-align="center">
+            <template if:true={showFiltersMode}>
+                <template for:each={categoriesToShow} for:item="categoriesLevel">
+                    <template for:each={categoriesLevel.data} for:item="category">
+                        <lightning-layout-item  size="2" key={category.Id} class="slds-p-horizontal_xx-small">
+
+                            <div class="slds-p-around_medium lgc-bg slds-box">
+                                <lightning-layout>
+                                    <lightning-layout-item size="8">
+                                        <lightning-tile label={category.name} id={category.id} name={category.level}  >
+                                        </lightning-tile>
+                                    </lightning-layout-item>
+                                    <lightning-layout-item size="2" class="slds-p-horizontal_xx-small">
+                                        <lightning-button-icon icon-name={category.iconName}
+                                                               id={category.id}
+                                                               name={category.level}
+                                                               onclick={handleCategoryClick}
+                                                               alternative-text="expand">
+
+                                        </lightning-button-icon>
+                                    </lightning-layout-item>
+                                    <lightning-layout-item size="2" class="slds-p-horizontal_xx-small">
+                                        <div class="redColor test">
+                                            <lightning-input id={category.id}
+                                                             type="checkbox-button"
+                                                             label=""
+                                                             name={category.level}
+                                                             checked={category.value}
+                                                             onchange={handleCategoryClick}
+                                                             class="redColor test"
+                                            >
+                                            </lightning-input>
+                                        </div>
+
+                                    </lightning-layout-item>
+                                </lightning-layout>
+                            </div>
+                        </lightning-layout-item>
+                    </template>
+
+                    <lightning-layout-item size="12" key={categoriesLevel.index}>
+                        <div class="slds-p-around_x-small"></div>
+                    </lightning-layout-item>
+                </template>
+            </template>
+
+            <template if:true={showFiltersMode}>
+                <lightning-layout-item size="4">
+                    <div class="slds-panel slds-size_medium slds-panel_docked slds-panel_docked-right slds-is-open" aria-hidden="false">
+                        <div class="slds-panel__header">
+                            <h2 class="slds-panel__header-title slds-text-heading_small slds-truncate" title="Filter">Filter</h2>
+                        </div>
+                        <div class="slds-panel__body">
+                            <div class="slds-filters">
+                                <template for:each={configsToShow} for:item="config">
+                                    <ol class="slds-list_vertical slds-list_vertical-space" key={config.id}>
+                                        <li class="slds-item slds-hint-parent">
+                                            <template if:true={config.isNumber}>
+                                                <lightning-layout>
+                                                    <lightning-layout-item size="6" multiple-rows="true">
+                                                        <lightning-input name={config.name}
+                                                                         label={config.name}
+                                                                         isnumber={config.isNumber}
+                                                                         type={config.type}
+                                                                         onchange={handleFilterChange}
+                                                                         placeholder="FROM">
+                                                        </lightning-input>
+                                                    </lightning-layout-item>
+                                                    <lightning-layout-item size="6">
+                                                        <lightning-input name={config.name}
+                                                                         label="Between"
+                                                                         isnumber={config.isNumber}
+                                                                         type={config.type}
+                                                                         onchange={handleFilterChange}
+                                                                         placeholder="TO">
+                                                        </lightning-input>
+                                                    </lightning-layout-item>
+                                                </lightning-layout>
+                                            </template>
+                                            <template if:true={config.isSelect}>
+                                                <lightning-combobox name={config.name}
+                                                                    label={config.name}
+                                                                    options={config.options}
+                                                                    onchange={handleFilterChange}
+                                                                    placeholder="Please select one"
+                                                                    type={config.type}>
+                                                </lightning-combobox>
+                                            </template>
+                                            <template if:true={config.isText}>
+                                                <lightning-input name={config.name} label={config.name} isnumber={config.isNumber} type={config.type} onchange={handleFilterChange}></lightning-input>
+                                            </template>
+                                        </li>
+                                    </ol>
+                                </template>
+                            </div>
+                        </div>
+
+                        <div style="text-align: center">
+                            <lightning-button label="Search" onclick={retrieveRecords}></lightning-button>
+                        </div>
+                    </div>
+                </lightning-layout-item>
+            </template>
+            <lightning-layout-item size="8">
+
+                <table class="slds-table slds-table_cell-buffer slds-table_bordered">
+                    <thead>
+                    <tr class="slds-line-height_reset">
+                        <template for:each={configsToShow} for:item="config">
+                            <th class="" scope="col" key={config.id}>
+                                <div class="slds-truncate" title={config.name}>{config.name}</div>
+                            </th>
+                        </template>
+                        <th class="" scope="col" >
+                            <div class="slds-truncate" >Actions</div>
+                        </th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <template for:each={selectedProducts} for:item="product">
+                        <tr class="slds-hint-parent" key={product}>
+                            <template for:each={product} for:item="field">
+                                <td   key={field.Id}>
+
+                                    <div class="slds-truncate" title={field.Value__c}>{field.Value__c}</div>
+                                </td>
+                            </template>
+                            <td>
+                                <div class="slds-truncate">
+                                    <a id={product.Id} onclick={deleteProduct} class="slds-p-right_small">Remove</a>
+                                    <a id={product.Id} onclick={editProduct} class="slds-p-right_small">Edit</a>
+                                </div>
+                            </td>
+                        </tr>
+                    </template>
+                    </tbody>
+                </table>
+
+            </lightning-layout-item>
+        </lightning-layout>
+    </lightning-card>
+
+    <template if:true={modalEnabled}>
+        <div class="demo-only" style="height: 640px;">
+            <section role="dialog" tabindex="-1" aria-labelledby="modal-heading-01" aria-modal="true" aria-describedby="modal-content-id-1" class="slds-modal slds-fade-in-open">
+                <div class="slds-modal__container">
+                    <header class="slds-modal__header">
+                        <button class="slds-button slds-button_icon slds-modal__close slds-button_icon-inverse" title="Close" onclick={closeModal}>
+                            <lightning-icon icon-name="utility:close"></lightning-icon>
+                            <span class="slds-assistive-text">Close</span>
+                        </button>
+                        <template if:true={productEditMode}>
+                            <h2 id="modal-heading-01" class="slds-text-heading_medium slds-hyphenate">Edit User</h2>
+                        </template>
+                        <template if:true={productDeleteMode}>
+                            <h2 id="modal-heading-02" class="slds-text-heading_medium slds-hyphenate">Delete User</h2>
+                        </template>
+                        <template if:true={productCreateMode}>
+                            <h2 id="modal-heading-03" class="slds-text-heading_medium slds-hyphenate">Create User</h2>
+                        </template>
+                    </header>
+                    <div class="slds-modal__content slds-p-around_medium" id="modal-content-id-1">
+                        <template if:true={productEditMode}>
+
+                        </template>
+                        <template if:true={productDeleteMode}>
+                            <center>
+                                <p>Are you sure?</p>
+
+                                <lightning-button label="Yes" onclick={deleteUserRecord}></lightning-button>
+                                <lightning-button label="No" onclick={closeModal}></lightning-button>
+                            </center>
+                        </template>
+                        <template if:true={productCreateMode}>
+                            <lightning-record-edit-form object-api-name="User__c" onsuccess={handleUserCreated}>
+                                <lightning-messages></lightning-messages>
+                                <div class="slds-grid">
+                                    <div class="slds-col slds-size_2-of-2">
+                                        <lightning-input-field field-name="Name"></lightning-input-field>
+                                        <lightning-input-field field-name="Username__c"></lightning-input-field>
+                                        <lightning-input-field field-name="Email__c"></lightning-input-field>
+                                        <lightning-input-field field-name="User_Role__c"></lightning-input-field>
+                                        <lightning-input-field field-name="Main_Company__c"></lightning-input-field>
+
+                                        <div class="slds-p-around_x-small slds-grid slds-grid_align-center">
+                                            <lightning-button type="submit" variant="brand" label="Create New" onclick={showSpinner}></lightning-button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </lightning-record-edit-form>
+                        </template>
+                    </div>
+                </div>
+            </section>
+            <div class="slds-backdrop slds-backdrop_open"></div>
+        </div>
+    </template>
+</template>

@@ -1,0 +1,103 @@
+version: 2.1
+orbs:
+  slack: circleci/slack@3.2.0
+jobs: 
+  build: 
+    docker:
+      - image: circleci/node:11.9-browsers
+    steps: 
+      - checkout
+      - run: 
+          command: |
+              wget -qO- https://developer.salesforce.com/media/salesforce-cli/sfdx-linux-amd64.tar.xz | tar xJf -
+              ./sfdx-cli-*/install
+              ./pmd/pmd_install.sh
+          name: "Install SFDX & PMD"
+      - run:
+          command: |
+              npm install
+              #sudo npm install -g jest jest-cli
+              mkdir -p /tmp/artifacts/test_results
+              mkdir -p /tmp/artifacts/screenshots
+              mkdir -p artifacts/pmd
+          name: "Install Build Dependencies"
+      - run:
+          name: "Setup Environment Variables"
+          command: |
+              echo 'export ORG_SFDXURL_ENV="${CIRCLE_BRANCH^^}_SFDXURL"' >> $BASH_ENV
+      - run:
+          name: "Show environment configuration"
+          command: |
+              echo "Build Branch SFDX Url Var Is"
+              echo ${ORG_SFDXURL_ENV}
+      - run: 
+          command: |
+              #echo $SFDXURL_HUB > /tmp/sfdx.url
+              #sfdx force:auth:sfdxurl:store -f /tmp/sfdx.url -a circle_build_$CIRCLE_BUILD_NUM --setdefaultdevhubusername
+              #authenticate
+              #if [[ $CIRCLE_BRANCH == "master" ]];
+              #then
+              echo ${!ORG_SFDXURL_ENV} > /tmp/sfdx_org.url
+              sfdx force:auth:sfdxurl:store -f /tmp/sfdx_org.url -a dev_org
+              #else
+              #  echo ${!ORG_SFDXURL_ENV} > /tmp/sfdx_org.url
+              #  sfdx force:auth:sfdxurl:store -f /tmp/sfdx_org.url -a dev_org
+              #fi
+          name: "Authenticate to org"
+      - run:
+          no_output_timeout: 30m
+          command: "./dx-utils/deploy.sh dev_org"
+          name: "Deploy to Org"
+#      - run:
+#          command: "./dx-utils/setup_scratch_org.sh circle_build_$CIRCLE_BUILD_NUM do_not_open_browser"
+#          name: "Setup Scratch Org"
+      - run:
+          command: |
+            set +e
+            #run apex unit tests
+            sfdx force:apex:test:run -u dev_org --wait 10 --resultformat tap --codecoverage -d test_results
+            dx-utils/parse_test_results.js >> /tmp/artifacts/test_results/test-result.txt
+            #run pmd source scanner
+            echo "Running PMD source code scanner"
+            ./pmd/pmd_scan.sh
+            #run puppet scripts
+            #jest
+            #run lwc unit tests
+            npm run test:unit
+          name: "Run Unit Tests and parse results"
+      - store_test_results:
+          path: test_results
+      - store_artifacts:
+          destination: test-result.txt
+          path: test_results/test-result.txt
+      - store_artifacts:
+          destination: ./artifacts/pmd
+          path: pmd/results
+      - store_artifacts:
+          destination: ./artifacts/screenshots
+          path: ./puppet/screenshots
+#      - run:
+#          command: "./dx-utils/delete_scratch_org.sh circle_build_$CIRCLE_BUILD_NUM -p\n"
+#          name: "Delete Scratch Org"
+#          when: always
+      - run:
+          command: |
+            echo "destructive changes"
+            node ./destructive/destroy.js -u dev_org -d ./destructive/step1
+          name: "Run Destructive Changes"
+      - run:
+          command: |
+            echo "destructive changes pt 2"
+            node ./destructive/destroy.js -u dev_org -d ./destructive/step2
+          name: "Run Secondary Destructive Changes"
+      - slack/status:
+          only_for_branches: "qa"
+          webhook: "https://hooks.slack.com/services/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"
+          success_message: ':partyparrot: $CIRCLE_PROJECT_REPONAME $CIRCLE_BRANCH $CIRCLE_JOB job $CIRCLE_BUILD_NUM has succeeded! $SLACK_MENTIONS'
+          failure_message: ':red_circle: $CIRCLE_PROJECT_REPONAME $CIRCLE_BRANCH $CIRCLE_JOB job $CIRCLE_BUILD_NUM has failed. $SLACK_MENTIONS'
+          include_job_number_field: false
+          include_project_field: false
+          include_visit_job_action: false
+      - store_artifacts: 
+          destination: ./artifacts
+          path: /tmp/artifacts
