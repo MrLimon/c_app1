@@ -21,8 +21,3 @@ before_install:
 
 script:
 - sfdx force:org:list
-- sfdx force:org:create edition=Developer -a ciorg -s -v HubOrg
-- sfdx force:org:display -u ciorg
-- sfdx force:source:push -u ciorg
-- sfdx force:apex:test:run -u ciorg --wait 10
-- sfdx force:org:delete -u ciorg -p
