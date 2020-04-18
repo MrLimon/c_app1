@@ -17,7 +17,7 @@ before_install:
 - sfdx plugins --core
 - echo $USERNAME
 - echo $CONSUMERKEY
-- sfdx force:auth:jwt:grant --clientid $CONSUMERKEY --jwtkeyfile assets/server.key --username $USERNAME --setdefaultdevhubusername -a HubOrg
+- sfdx force:auth:jwt:grant --clientid 3MVG92mNMNiWvonihVW4zmYsaBXQdvzpnU13AmHoIJyEbLqJizpZc30EsZPQNhKKOgJh1DB0cdEpy9LFa6xx_ --jwtkeyfile assets/server.key --username demidow_dima1@gmail.com --setdefaultdevhubusername -a HubOrg
 
 script:
 - sfdx force:org:list
