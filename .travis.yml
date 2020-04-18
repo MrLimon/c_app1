@@ -17,7 +17,7 @@ before_install:
 - sfdx plugins --core
 - echo $USERNAME
 - echo $CONSUMERKEY
-- sfdx force:auth:jwt:grant --clientid $CONSUMERKEY -r https://mycars-dev-ed.lightning.force.com/ --jwtkeyfile assets/server.key --username $USERNAME --setdefaultdevhubusername -a HubOrg
+- sfdx force:auth:jwt:grant --clientid $CONSUMERKEY -r https://mycars-dev-ed.lightning.force.com --jwtkeyfile assets/server.key --username $USERNAME --setdefaultdevhubusername -a HubOrg
 
 script:
 - sfdx force:org:list
