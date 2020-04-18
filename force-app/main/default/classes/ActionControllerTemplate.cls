@@ -2,6 +2,7 @@ public with sharing class ActionControllerTemplate {
 	@AuraEnabled(cacheable=true)
 	public static Object invokeCachableAction(String actions)
 	{
+//
 		// new code line
 		//second line
 		//3d line
