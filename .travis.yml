@@ -21,4 +21,3 @@ before_install:
 
 script:
 - sfdx force:org:list
-- sfdx force:source:deploy -u HubOrg -m "ApexClass"
